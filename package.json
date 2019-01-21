@@ -5,7 +5,8 @@
   "main": "hikvision.js",
   "dependencies": {
     "xml2js": "^0.4.16",
-    "net-keepalive": "*"
+    "net-keepalive": "*",
+    "md5":"*"
   },
   "devDependencies": {},
   "scripts": {

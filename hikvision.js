@@ -44,6 +44,40 @@ hikvision.prototype.connect = function(options) {
 	});
 
 	client.on('data', function(data) {
+		if(data.indexOf('HTTP/1.1 401 Unauthorized') === 0 && data.indexOf('WWW-Authenticate:') !== -1) {
+			if(TRACE) console.log('401 Unauthorized, retrying with digest');
+
+			var md5 = require('md5');
+
+			data = data.toString().split("\r\n");
+			var wwwAuthenticate = null;
+			for(var i = 0 ; i < data.length ; i++) {
+				if(data[i].indexOf('WWW-Authenticate:') === 0) {
+					wwwAuthenticate = data[i];
+					break;
+				}
+			}
+
+			var realm = wwwAuthenticate.replace(/.*realm="([^"]*).*"/, "$1");
+			var nonce = wwwAuthenticate.replace(/.*nonce="([^"]*).*"/, "$1");
+			var opaque = wwwAuthenticate.replace(/.*opaque="([^"]*).*"/, "$1");
+
+			var ha1 = md5(options.user + ':' + realm + ':' + options.pass);
+			var uri = '/ISAPI/Event/notification/alertStream';
+			var ha2 = md5('GET:' + uri);
+			var nc = '00000001';
+			var cnonce = md5(Math.random()*1447);
+			var response = md5([ ha1, nonce, nc, cnonce, 'auth', ha2 ].join(':'));
+
+			var authHeader = 'Authorization: Digest username="' + options.user + '", realm="' + realm + '", nonce="' + nonce + '", uri="' + uri + '", cnonce="' + cnonce + '", nc=' + nc + ', qop=auth, response="' + response + '", opaque="' + opaque + '", algorithm="MD5"';
+
+			var header =	'GET /ISAPI/Event/notification/alertStream HTTP/1.1\r\n' +
+					'Host: ' + options.host + ':' + options.port + '\r\n' +
+					authHeader + '\r\n' +
+					'Accept: multipart/x-mixed-replace\r\n\r\n';
+			client.write(header)
+		}
+
        		handleData(self, data)
 	});
 
