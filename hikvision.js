@@ -216,7 +216,7 @@ function handleData(self, data) {
 		if (result) {
 			var code = result['EventNotificationAlert']['eventType'][0]
 			var action = result['EventNotificationAlert']['eventState'][0]
-			var index = parseInt(result['EventNotificationAlert']['channelID'][0])
+			var index = (typeof(result['EventNotificationAlert']['channelID']) !== 'undefined') ? parseInt(result['EventNotificationAlert']['channelID'][0]) : parseInt(result['EventNotificationAlert']['dynChannelID'][0])
 			var count = parseInt(result['EventNotificationAlert']['activePostCount'][0])
 
 			// give codes returned by camera prettier and standardized description
